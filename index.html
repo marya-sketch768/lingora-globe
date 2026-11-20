@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lingora</title>
+<style>
+html,body{margin:0;height:100%;background:#0b1a14;overflow:hidden}
+canvas{display:block;touch-action:none}
+</style>
+</head>
+<body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
+camera.position.z = 4.2;
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+document.body.appendChild(renderer.domElement);
+
+const globe = new THREE.Group();
+scene.add(globe);
+globe.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.5, 48, 48),
+  new THREE.MeshBasicMaterial({color:0x10261c})));
+globe.add(new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.SphereGeometry(1.51, 24, 16)),
+  new THREE.LineBasicMaterial({color:0xc9a24b, transparent:true, opacity:0.6})));
+
+let dragging = false, lx = 0, ly = 0;
+renderer.domElement.addEventListener('pointerdown', e => {
+  dragging = true; lx = e.clientX; ly = e.clientY;
+});
+addEventListener('pointerup', () => dragging = false);
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  globe.rotation.y += (e.clientX - lx) * 0.006;
+  globe.rotation.x += (e.clientY - ly) * 0.006;
+  lx = e.clientX; ly = e.clientY;
+});
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+function animate(){
+  requestAnimationFrame(animate);
+  if (!dragging) globe.rotation.y += 0.002;
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+</html>
