@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lingora</title>
+<style>
+:root{--green:#0b1a14;--parchment:#f1e6cc;--gold:#c9a24b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;color:var(--parchment);
+font-family:Georgia,"Times New Roman",serif;
+background:radial-gradient(circle at 60% 40%,#14301f,#0b1a14 70%)}
+#intro{position:relative;z-index:2;padding:28px 22px;max-width:520px;
+transition:opacity .6s}
+#intro h1{margin:0 0 12px;font-size:2rem;font-weight:normal;
+color:var(--gold);letter-spacing:.03em}
+#intro p{margin:0 0 22px;font-size:1.15rem;line-height:1.5}
+button{font:inherit;font-size:1.05rem;color:var(--green);
+background:var(--gold);border:0;border-radius:999px;
+padding:14px 26px;min-height:48px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--parchment);outline-offset:3px}
+#stage{position:fixed;left:0;right:0;bottom:0;top:42%;
+transition:all .8s ease}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none}
+#picker{position:fixed;top:0;left:0;right:0;z-index:3;display:flex;
+align-items:center;gap:14px;padding:14px 16px;opacity:0;
+pointer-events:none;transition:opacity .6s}
+#picker span{font-size:1.1rem}
+body.choosing #intro{opacity:0;pointer-events:none}
+body.choosing #stage{top:0;left:0}
+body.choosing #picker{opacity:1;pointer-events:auto}
+@media(min-width:800px){
+#intro{position:absolute;top:50%;left:6vw;max-width:34vw;
+padding:0;margin-top:-110px}
+#intro h1{font-size:2.8rem}
+#stage{top:0;left:45%}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section id="intro">
+<h1>Hello, welcome to Lingora</h1>
+<p>Please select the language you wish to learn.</p>
+<button id="choose">Choose a language</button>
+</section>
+
+<div id="picker">
+<button id="back">Back</button>
+<span>Language books will appear here soon.</span>
+</div>
+
+<div id="stage"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const stage = document.getElementById('stage');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+const renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+stage.appendChild(renderer.domElement);
+
+const globe = new THREE.Group();
+globe.rotation.x = 0.3;
+scene.add(globe);
+globe.add(new THREE.Mesh(
+  new THREE.SphereGeometry(1.5, 48, 48),
+  new THREE.MeshBasicMaterial({color:0x10261c})));
+globe.add(new THREE.LineSegments(
+  new THREE.WireframeGeometry(new THREE.SphereGeometry(1.51, 24, 16)),
+  new THREE.LineBasicMaterial({color:0xc9a24b, transparent:true, opacity:0.6})));
+
+function fit(){
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  const aspect = w / h;
+  camera.aspect = aspect;
+  camera.position.z = 4.6 / Math.min(aspect, 1);
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(fit).observe(stage);
+fit();
+
+let dragging = false, lx = 0, ly = 0;
+renderer.domElement.addEventListener('pointerdown', e => {
+  dragging = true; lx = e.clientX; ly = e.clientY;
+});
+addEventListener('pointerup', () => dragging = false);
+addEventListener('pointermove', e => {
+  if (!dragging) return;
+  globe.rotation.y += (e.clientX - lx) * 0.006;
+  globe.rotation.x += (e.clientY - ly) * 0.006;
+  lx = e.clientX; ly = e.clientY;
+});
+
+document.getElementById('choose').onclick = () =>
+  document.body.classList.add('choosing');
+document.getElementById('back').onclick = () =>
+  document.body.classList.remove('choosing');
+
+function animate(){
+  requestAnimationFrame(animate);
+  if (!dragging && !reduceMotion) globe.rotation.y += 0.002;
+  renderer.render(scene, camera);
+}
+animate();
+</script>
+</body>
+  </html>
